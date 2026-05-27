@@ -1,0 +1,29 @@
+:root {
+  --bg: #0b0d10; --fg: #eef2f4; --muted:#a8b3bd; --card:#14181d; --accent:#33c3ff;
+}
+* { box-sizing: border-box; }
+body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:var(--fg); }
+header { padding:24px 20px 8px; max-width: 1000px; margin:0 auto; }
+h1 { margin:0 0 6px; font-size: clamp(1.6rem, 3vw, 2rem); }
+.sub { color:var(--muted); margin:0; }
+main { max-width: 1000px; margin: 0 auto; padding: 12px 20px 40px; display: grid; gap: 16px; }
+.grid { display: grid; grid-template-columns: 1fr; gap:16px; }
+@media (min-width: 900px){ .grid{ grid-template-columns: 1fr 1fr; } }
+.card { background: var(--card); border:1px solid #1f252b; border-radius:12px; padding:16px; }
+#searchForm { display:flex; gap:8px; margin-bottom:12px; }
+#searchForm input { flex:1; padding:10px 12px; border-radius:8px; border:1px solid #28313a; background:#0f1317; color:var(--fg); }
+#searchForm button { padding:10px 12px; border-radius:8px; border:1px solid #2b3640; background:#151b21; color:var(--fg); cursor:pointer; }
+#searchForm button:hover { border-color:#3a4856; }
+.hidden { display:none; }
+.aq-head { display:flex; align-items:baseline; gap:10px; }
+.muted { color:var(--muted); }
+.small { font-size: 0.9rem; }
+.aq-badges { display:flex; gap:10px; margin: 10px 0 6px; }
+.aqi-badge { padding:10px 14px; border-radius:999px; font-weight:700; }
+.dom-pol { padding:10px 14px; border-radius:999px; background:#0f1317; border:1px solid #2b3640; }
+.pollutants { display:grid; grid-template-columns: repeat(auto-fill, minmax(120px,1fr)); gap:8px; }
+.pollutants .chip { background:#0f1317; border:1px solid #2b3640; border-radius:10px; padding:10px; }
+.news { list-style:none; padding:0; margin:0; display:grid; gap:12px; }
+.news li a { color: var(--fg); text-decoration:none; }
+.news li a:hover { text-decoration: underline; }
+footer { max-width:1000px; margin: 10px auto 40px; padding: 0 20px; }

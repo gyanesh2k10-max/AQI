@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>AQ India — Live Air Quality & News</title>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+<header>
+  <h1>Air Quality — India & Anywhere</h1>
+  <p class="sub">Live AQI for your chosen location + India air quality news.</p>
+</header>
+
+<main>
+  <section class="card">
+    <h2>Check real-time AQI</h2>
+    <form id="searchForm">
+      <input id="cityInput" type="text" placeholder="Enter a city or place (e.g., Delhi, Mumbai, Bengaluru)"/>
+      <button type="submit">Search</button>
+      <button id="useGPS" type="button" title="Use my location">Use my location</button>
+    </form>
+
+    <div id="aqResult" class="aq-result hidden">
+      <div class="aq-head">
+        <h3 id="locationName">—</h3>
+        <span id="updatedAt" class="muted">—</span>
+      </div>
+
+      <div class="aq-badges">
+        <div class="aqi-badge" id="aqiBadge">AQI —</div>
+        <div class="dom-pol" id="domPol">—</div>
+      </div>
+
+      <div id="pollutants" class="pollutants"></div>
+      <details class="muted">
+        <summary>What’s this number?</summary>
+        <p>Real-time AQI from the World Air Quality Index project (US-AQI scale). Some stations provide extra pollutants.</p>
+      </details>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <h2>India — Official Dashboards</h2>
+      <ul>
+        <li><a href="https://airquality.cpcb.gov.in/AQI_India/" target="_blank" rel="noopener">CPCB National AQI (Official)</a></li>
+        <li><a href="https://cpcb.nic.in/National-Air-Quality-Index/" target="_blank" rel="noopener">NAQI methodology</a></li>
+        <li><a href="https://safar.tropmet.res.in/" target="_blank" rel="noopener">SAFAR-India (IITM) city forecasts</a></li>
+      </ul>
+      <p class="muted small">Note: CPCB shows India’s NAQI; WAQI uses the US-AQI scale, so numbers can differ.</p>
+    </div>
+
+    <div class="card">
+      <h2>India Air-Quality News</h2>
+      <ul id="newsList" class="news"></ul>
+      <p class="muted small">News powered by Google News RSS via a lightweight proxy.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p class="muted small">Data: WAQI API, OpenAQ (backup). Official info: CPCB & SAFAR.</p>
+</footer>
+
+<script>
+  window.WAQI_TOKEN = "REPLACE_WITH_YOUR_WAQI_TOKEN";
+</script>
+<script src="script.js"></script>
+</body>
+</html>

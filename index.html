@@ -1,71 +1,364 @@
+```html
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>AQ India — Live Air Quality & News</title>
-  <link rel="stylesheet" href="styles.css"/>
+  <meta charset="utf-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <meta
+    name="description"
+    content="Check live air quality and access air-pollution information and news for India."
+  >
+
+  <title>AQ India — Live Air Quality and News</title>
+
+  <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-<header>
-  <h1>Air Quality — India & Anywhere</h1>
-  <p class="sub">Live AQI for your chosen location + India air quality news.</p>
-</header>
 
-<main>
-  <section class="card">
-    <h2>Check real-time AQI</h2>
-    <form id="searchForm">
-      <input id="cityInput" type="text" placeholder="Enter a city or place (e.g., Delhi, Mumbai, Bengaluru)"/>
-      <button type="submit">Search</button>
-      <button id="useGPS" type="button" title="Use my location">Use my location</button>
-    </form>
+  <header>
+    <h1>Air Quality — India and Anywhere</h1>
 
-    <div id="aqResult" class="aq-result hidden">
-      <div class="aq-head">
-        <h3 id="locationName">—</h3>
-        <span id="updatedAt" class="muted">—</span>
+    <p class="sub">
+      Check live air quality for your chosen location and access the latest
+      air-quality information and news from India.
+    </p>
+  </header>
+
+  <main>
+
+    <!-- Live AQI search section -->
+    <section class="card">
+
+      <h2>Check real-time air quality</h2>
+
+      <form id="searchForm">
+
+        <label for="cityInput" class="sr-only">
+          Enter a city or location
+        </label>
+
+        <input
+          id="cityInput"
+          type="text"
+          placeholder="Enter a city, for example Delhi, Mumbai or Bengaluru"
+          autocomplete="off"
+          required
+        >
+
+        <button type="submit">
+          Search
+        </button>
+
+        <button
+          id="useGPS"
+          type="button"
+          title="Use my current location"
+        >
+          Use my location
+        </button>
+
+      </form>
+
+      <p id="statusMessage" class="muted small"></p>
+
+      <div id="aqResult" class="aq-result hidden">
+
+        <div class="aq-head">
+
+          <h3 id="locationName">
+            Selected location
+          </h3>
+
+          <span id="updatedAt" class="muted"></span>
+
+        </div>
+
+        <div class="aq-badges">
+
+          <div class="aqi-badge" id="aqiBadge">
+            AQI —
+          </div>
+
+          <div class="dom-pol" id="domPol">
+            Dominant pollutant —
+          </div>
+
+        </div>
+
+        <div id="pollutants" class="pollutants"></div>
+
+        <details class="muted">
+
+          <summary>
+            What does this AQI number mean?
+          </summary>
+
+          <p>
+            The displayed value is provided by the World Air Quality Index
+            project and generally follows the US AQI scale. Values may differ
+            from India's National Air Quality Index because the calculation
+            methods and pollutant breakpoints are different.
+          </p>
+
+        </details>
+
       </div>
 
-      <div class="aq-badges">
-        <div class="aqi-badge" id="aqiBadge">AQI —</div>
-        <div class="dom-pol" id="domPol">—</div>
+    </section>
+
+
+    <section class="grid">
+
+      <!-- Official information -->
+      <div class="card">
+
+        <h2>Official Indian air-quality resources</h2>
+
+        <ul>
+
+          <li>
+            <a
+              href="https://airquality.cpcb.gov.in/AQI_India/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              CPCB National Air Quality Index
+            </a>
+          </li>
+
+          <li>
+            <a
+              href="https://cpcb.nic.in/National-Air-Quality-Index/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              CPCB National AQI methodology
+            </a>
+          </li>
+
+          <li>
+            <a
+              href="https://cpcb.nic.in/air-quality-management/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              CPCB air-quality management information
+            </a>
+          </li>
+
+          <li>
+            <a
+              href="https://safar.tropmet.res.in/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              SAFAR-India air-quality forecasts
+            </a>
+          </li>
+
+          <li>
+            <a
+              href="https://prana.cpcb.gov.in/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              PRANA National Clean Air Programme portal
+            </a>
+          </li>
+
+        </ul>
+
+        <p class="muted small">
+          CPCB reports India's National AQI. The live search section may use
+          a different AQI scale, so the numbers may not always be identical.
+        </p>
+
       </div>
 
-      <div id="pollutants" class="pollutants"></div>
-      <details class="muted">
-        <summary>What’s this number?</summary>
-        <p>Real-time AQI from the World Air Quality Index project (US-AQI scale). Some stations provide extra pollutants.</p>
-      </details>
-    </div>
-  </section>
 
-  <section class="grid">
-    <div class="card">
-      <h2>India — Official Dashboards</h2>
-      <ul>
-        <li><a href="https://airquality.cpcb.gov.in/AQI_India/" target="_blank" rel="noopener">CPCB National AQI (Official)</a></li>
-        <li><a href="https://cpcb.nic.in/National-Air-Quality-Index/" target="_blank" rel="noopener">NAQI methodology</a></li>
-        <li><a href="https://safar.tropmet.res.in/" target="_blank" rel="noopener">SAFAR-India (IITM) city forecasts</a></li>
-      </ul>
-      <p class="muted small">Note: CPCB shows India’s NAQI; WAQI uses the US-AQI scale, so numbers can differ.</p>
-    </div>
+      <!-- News links -->
+      <div class="card">
 
-    <div class="card">
-      <h2>India Air-Quality News</h2>
-      <ul id="newsList" class="news"></ul>
-      <p class="muted small">News powered by Google News RSS via a lightweight proxy.</p>
-    </div>
-  </section>
-</main>
+        <h2>Latest India air-quality news</h2>
 
-<footer>
-  <p class="muted small">Data: WAQI API, OpenAQ (backup). Official info: CPCB & SAFAR.</p>
-</footer>
+        <ul class="news">
 
-<script>
-  window.WAQI_TOKEN = "0511552d3fb8c1b005c5d629fefd61f8592ce0df";
-</script>
-<script src="script.js"></script>
+          <li>
+            <a
+              href="https://news.google.com/search?q=air%20quality%20India&hl=en-IN&gl=IN&ceid=IN%3Aen"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Latest air-quality news from India
+            </a>
+
+            <div class="muted small">
+              Current stories from multiple news publishers
+            </div>
+          </li>
+
+          <li>
+            <a
+              href="https://news.google.com/search?q=India%20air%20pollution&hl=en-IN&gl=IN&ceid=IN%3Aen"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              India air-pollution news
+            </a>
+
+            <div class="muted small">
+              Pollution policies, research and city updates
+            </div>
+          </li>
+
+          <li>
+            <a
+              href="https://news.google.com/search?q=Delhi%20air%20quality&hl=en-IN&gl=IN&ceid=IN%3Aen"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Delhi air-quality news
+            </a>
+
+            <div class="muted small">
+              Delhi-NCR AQI, pollution episodes and interventions
+            </div>
+          </li>
+
+          <li>
+            <a
+              href="https://news.google.com/search?q=CPCB%20air%20quality&hl=en-IN&gl=IN&ceid=IN%3Aen"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              CPCB air-quality updates
+            </a>
+
+            <div class="muted small">
+              News and announcements related to CPCB
+            </div>
+          </li>
+
+          <li>
+            <a
+              href="https://news.google.com/search?q=National%20Clean%20Air%20Programme%20India&hl=en-IN&gl=IN&ceid=IN%3Aen"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              National Clean Air Programme news
+            </a>
+
+            <div class="muted small">
+              NCAP targets, city action plans and government updates
+            </div>
+          </li>
+
+          <li>
+            <a
+              href="https://news.google.com/search?q=PM2.5%20India%20air%20quality&hl=en-IN&gl=IN&ceid=IN%3Aen"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              PM2.5 research and health news
+            </a>
+
+            <div class="muted small">
+              Recent studies on particulate matter and public health
+            </div>
+          </li>
+
+        </ul>
+
+        <p class="muted small">
+          These links open the latest matching Google News results. Individual
+          headlines cannot be automatically displayed on GitHub Pages without
+          an external news service or backend.
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <!-- Basic AQI information -->
+    <section class="card">
+
+      <h2>Understanding the AQI</h2>
+
+      <div class="pollutants">
+
+        <div class="chip">
+          <strong>0–50</strong>
+          <br>
+          <span class="muted">Good</span>
+        </div>
+
+        <div class="chip">
+          <strong>51–100</strong>
+          <br>
+          <span class="muted">Moderate</span>
+        </div>
+
+        <div class="chip">
+          <strong>101–150</strong>
+          <br>
+          <span class="muted">Unhealthy for sensitive groups</span>
+        </div>
+
+        <div class="chip">
+          <strong>151–200</strong>
+          <br>
+          <span class="muted">Unhealthy</span>
+        </div>
+
+        <div class="chip">
+          <strong>201–300</strong>
+          <br>
+          <span class="muted">Very unhealthy</span>
+        </div>
+
+        <div class="chip">
+          <strong>Above 300</strong>
+          <br>
+          <span class="muted">Hazardous</span>
+        </div>
+
+      </div>
+
+      <p class="muted small">
+        This simplified guide corresponds to the AQI scale used by the live
+        data provider. Health advice should also consider official local
+        guidance and individual medical circumstances.
+      </p>
+
+    </section>
+
+  </main>
+
+
+  <footer>
+
+    <p class="muted small">
+      Live data provided through the World Air Quality Index API.
+      Official information is available from CPCB, PRANA and SAFAR-India.
+    </p>
+
+  </footer>
+
+
+  <!-- Replace the text below with your newly generated WAQI token -->
+  <script>
+    window.WAQI_TOKEN = "0511552d3fb8c1b005c5d629fefd61f8592ce0df";
+  </script>
+
+  <script src="script.js"></script>
+
 </body>
 </html>
+```

@@ -269,6 +269,63 @@ value.textContent = `${displayValue}${unit ? ` ${unit}` : ""}`;
       card.appendChild(value);
 
       pollutants.appendChild(card);
+        const contactForm = document.getElementById("contactForm");
+  const contactStatus = document.getElementById("contactStatus");
+
+  if (contactForm && contactStatus) {
+    contactForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const submitButton = contactForm.querySelector(
+        ".contact-submit-button"
+      );
+
+      const formData = new FormData(contactForm);
+
+      contactStatus.textContent = "Sending your message…";
+      contactStatus.className = "contact-status";
+
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = "Sending…";
+      }
+
+      try {
+        const response = await fetch(contactForm.action, {
+          method: "POST",
+          body: formData,
+          headers: {
+            Accept: "application/json"
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error("The message could not be sent.");
+        }
+
+        contactForm.reset();
+
+        contactStatus.textContent =
+          "Thank you. Your message has been sent successfully.";
+
+        contactStatus.className =
+          "contact-status success";
+      } catch (error) {
+        console.error("Contact form error:", error);
+
+        contactStatus.textContent =
+          "Sorry, your message could not be sent. Please try again.";
+
+        contactStatus.className =
+          "contact-status error";
+      } finally {
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = "Send message";
+        }
+      }
+    });
+  }
     });
 
     aqResult.scrollIntoView({

@@ -253,8 +253,17 @@ document.addEventListener("DOMContentLoaded", () => {
       value.className = "muted";
 
       const unit = units[key] || "";
-      value.textContent = `${measurement.v}${unit ? ` ${unit}` : ""}`;
+let displayValue = measurement.v;
 
+if (["h", "p", "w"].includes(key)) {
+  const numericValue = Number(measurement.v);
+
+  if (Number.isFinite(numericValue)) {
+    displayValue = numericValue.toFixed(1);
+  }
+}
+
+value.textContent = `${displayValue}${unit ? ` ${unit}` : ""}`;
       card.appendChild(title);
       card.appendChild(lineBreak);
       card.appendChild(value);

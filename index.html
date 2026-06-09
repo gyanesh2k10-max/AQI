@@ -46,6 +46,7 @@
       <a href="#news">News</a>
       <a href="#aqi-guide">AQI Guide</a>
       <a href="#about">About</a>
+      <a href="#contact">Contact</a>
     </nav>
 
     <a class="header-button" href="#live-aqi">
@@ -415,7 +416,6 @@
 
     </section>
 
-
     <!-- About -->
     <section id="about" class="about-section">
 
@@ -436,7 +436,146 @@
       </p>
 
     </section>
+<section id="contact" class="contact-section">
 
+  <div class="contact-intro">
+
+    <span class="section-label">Contact and feedback</span>
+
+    <h2>Send us your comments</h2>
+
+    <p>
+      Share feedback, report an issue or suggest an improvement.
+      Your comments will be recorded and sent securely to the site administrator.
+    </p>
+
+    <div class="contact-note">
+      Your email address will only be used to respond to your message.
+    </div>
+
+  </div>
+
+
+  <form
+    id="contactForm"
+    class="contact-form"
+    action="https://formspree.io/f/xeewzqvw"
+    method="POST"
+  >
+
+    <div class="form-row">
+
+      <div class="form-field">
+        <label for="contactName">Name</label>
+
+        <input
+          id="contactName"
+          name="name"
+          type="text"
+          maxlength="100"
+          autocomplete="name"
+          required
+        >
+      </div>
+
+      <div class="form-field">
+        <label for="contactEmail">Email</label>
+
+        <input
+          id="contactEmail"
+          name="email"
+          type="email"
+          maxlength="150"
+          autocomplete="email"
+          required
+        >
+      </div>
+
+    </div>
+
+
+    <div class="form-field">
+      <label for="contactSubject">Subject</label>
+
+      <select
+        id="contactSubject"
+        name="subject"
+        required
+      >
+        <option value="">Select a subject</option>
+        <option value="General feedback">General feedback</option>
+        <option value="Report incorrect AQI data">Report incorrect AQI data</option>
+        <option value="Website problem">Website problem</option>
+        <option value="Suggestion">Suggestion</option>
+        <option value="Collaboration enquiry">Collaboration enquiry</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+
+
+    <div class="form-field">
+      <label for="contactMessage">Comments</label>
+
+      <textarea
+        id="contactMessage"
+        name="message"
+        rows="7"
+        minlength="10"
+        maxlength="2000"
+        placeholder="Write your comments here..."
+        required
+      ></textarea>
+
+      <span class="character-help">
+        Maximum 2,000 characters
+      </span>
+    </div>
+
+
+    <!-- Spam protection: users should leave this empty -->
+    <input
+      class="honeypot"
+      type="text"
+      name="_gotcha"
+      tabindex="-1"
+      autocomplete="off"
+      aria-hidden="true"
+    >
+
+
+    <input
+      type="hidden"
+      name="_subject"
+      value="New message from the AQ India website"
+    >
+
+
+    <label class="consent-field">
+
+      <input
+        type="checkbox"
+        name="privacy_consent"
+        value="Agreed"
+        required
+      >
+
+      <span>
+        I agree that my details may be used to respond to this enquiry.
+      </span>
+
+    </label>
+
+
+    <button class="contact-submit-button" type="submit">
+      Send message
+    </button>
+
+    <p id="contactStatus" class="contact-status" aria-live="polite"></p>
+
+  </form>
+
+</section>
+    
   </main>
 
 

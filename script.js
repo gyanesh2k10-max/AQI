@@ -1,313 +1,392 @@
-```javascript
-const $ = (selector) => document.querySelector(selector);
+document.addEventListener("DOMContentLoaded", () => {
+  const searchForm = document.getElementById("searchForm");
+  const cityInput = document.getElementById("cityInput");
+  const gpsButton = document.getElementById("useGPS");
+  const statusMessage = document.getElementById("statusMessage");
+  const aqResult = document.getElementById("aqResult");
 
-const searchForm = $("#searchForm");
-const cityInput = $("#cityInput");
-const gpsButton = $("#useGPS");
-const statusMessage = $("#statusMessage");
-const aqResult = $("#aqResult");
+  const locationName = document.getElementById("locationName");
+  const updatedAt = document.getElementById("updatedAt");
+  const aqiBadge = document.getElementById("aqiBadge");
+  const domPol = document.getElementById("domPol");
+  const pollutants = document.getElementById("pollutants");
 
-/**
- * Display a message below the search form.
- */
-function setStatus(message, isError = false) {
-  if (!statusMessage) return;
+  function showStatus(message, isError = false) {
+    if (!statusMessage) return;
 
-  statusMessage.textContent = message;
-  statusMessage.style.color = isError ? "#ff6b6b" : "";
-}
+    statusMessage.textContent = message;
+    statusMessage.style.color = isError ? "#c62828" : "#68748a";
+  }
 
-/**
- * Return a background colour for the US AQI scale.
- */
-function getAQIColour(aqi) {
-  if (!Number.isFinite(aqi)) return "#6c757d";
-  if (aqi <= 50) return "#00e400";
-  if (aqi <= 100) return "#ffff00";
-  if (aqi <= 150) return "#ff7e00";
-  if (aqi <= 200) return "#ff0000";
-  if (aqi <= 300) return "#8f3f97";
+  function getToken() {
+    const token = window.WAQI_TOKEN?.trim();
 
-  return "#7e0023";
-}
+    if (
+      !token ||
+      token === "YOUR_VALID_WAQI_TOKEN" ||
+      token === "PASTE_YOUR_NEW_WAQI_TOKEN_HERE" ||
+      token === "REPLACE_WITH_YOUR_WAQI_TOKEN"
+    ) {
+      throw new Error(
+        "WAQI token is missing. Add your valid token near the bottom of index.html."
+      );
+    }
 
-/**
- * Return readable text colour for the AQI badge.
- */
-function getAQITextColour(aqi) {
-  if (aqi <= 100) return "#111111";
-  return "#ffffff";
-}
+    return token;
+  }
 
-/**
- * Check that a token has been added in index.html.
- */
-function getToken() {
-  const token = window.WAQI_TOKEN?.trim();
+  function getAQIColour(aqi) {
+    if (!Number.isFinite(aqi)) return "#6c757d";
+    if (aqi <= 50) return "#009b36";
+    if (aqi <= 100) return "#77b82a";
+    if (aqi <= 150) return "#f4b000";
+    if (aqi <= 200) return "#f27900";
+    if (aqi <= 300) return "#d93424";
 
-  if (
-    !token ||
-    token === "PASTE_YOUR_NEW_WAQI_TOKEN_HERE" ||
-    token === "REPLACE_WITH_YOUR_WAQI_TOKEN"
-  ) {
-    throw new Error(
-      "WAQI token is missing. Add your valid token in index.html."
+    return "#7a208f";
+  }
+
+  function getAQITextColour(aqi) {
+    return aqi <= 150 ? "#111111" : "#ffffff";
+  }
+
+  async function requestAQIData(url) {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`Network error ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    console.log("WAQI response:", result);
+
+    if (result.status !== "ok") {
+      const errorText =
+        typeof result.data === "string"
+          ? result.data
+          : "No air-quality station was found for this location.";
+
+      throw new Error(errorText);
+    }
+
+    return result.data;
+  }
+
+  async function searchCity(city) {
+    const token = getToken();
+
+    /*
+     * First try the direct city feed.
+     */
+    const directUrl =
+      `https://api.waqi.info/feed/${encodeURIComponent(city)}/` +
+      `?token=${encodeURIComponent(token)}`;
+
+    try {
+      return await requestAQIData(directUrl);
+    } catch (directError) {
+      console.warn("Direct city search failed:", directError);
+
+      /*
+       * If the direct feed fails, search for monitoring stations.
+       */
+      const searchUrl =
+        `https://api.waqi.info/search/` +
+        `?token=${encodeURIComponent(token)}` +
+        `&keyword=${encodeURIComponent(city)}`;
+
+      const response = await fetch(searchUrl);
+
+      if (!response.ok) {
+        throw new Error(`Network error ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      console.log("WAQI station search:", result);
+
+      if (
+        result.status !== "ok" ||
+        !Array.isArray(result.data) ||
+        result.data.length === 0
+      ) {
+        throw new Error(
+          "No monitoring station was found. Try a nearby major city."
+        );
+      }
+
+      const station = result.data[0];
+
+      if (!station.uid) {
+        throw new Error("The monitoring station ID is unavailable.");
+      }
+
+      const stationUrl =
+        `https://api.waqi.info/feed/@${station.uid}/` +
+        `?token=${encodeURIComponent(token)}`;
+
+      return requestAQIData(stationUrl);
+    }
+  }
+
+  async function searchCoordinates(latitude, longitude) {
+    const token = getToken();
+
+    const url =
+      `https://api.waqi.info/feed/geo:${latitude};${longitude}/` +
+      `?token=${encodeURIComponent(token)}`;
+
+    return requestAQIData(url);
+  }
+
+  function displayAQI(data) {
+    if (!aqResult) return;
+
+    aqResult.classList.remove("hidden");
+
+    locationName.textContent =
+      data.city?.name || "Selected monitoring station";
+
+    updatedAt.textContent = data.time?.s
+      ? `Updated: ${data.time.s}`
+      : "Update time unavailable";
+
+    const aqi = Number(data.aqi);
+
+    aqiBadge.innerHTML = "";
+
+    const label = document.createElement("span");
+    label.className = "aqi-label";
+    label.textContent = "AQI";
+
+    const number = document.createElement("span");
+    number.className = "aqi-number";
+    number.textContent = Number.isFinite(aqi) ? aqi : "—";
+
+    aqiBadge.appendChild(label);
+    aqiBadge.appendChild(number);
+
+    aqiBadge.style.backgroundColor = getAQIColour(aqi);
+    aqiBadge.style.color = getAQITextColour(aqi);
+
+    domPol.textContent = data.dominentpol
+      ? data.dominentpol.toUpperCase()
+      : "Unavailable";
+
+    pollutants.innerHTML = "";
+
+    if (!data.iaqi || Object.keys(data.iaqi).length === 0) {
+      const message = document.createElement("p");
+      message.className = "muted";
+      message.textContent =
+        "No individual pollutant measurements are available.";
+
+      pollutants.appendChild(message);
+      return;
+    }
+
+    const displayNames = {
+      pm25: "PM2.5",
+      pm10: "PM10",
+      no2: "NO₂",
+      so2: "SO₂",
+      o3: "O₃",
+      co: "CO",
+      nh3: "NH₃",
+      t: "Temperature",
+      h: "Humidity",
+      p: "Pressure",
+      w: "Wind"
+    };
+
+    const units = {
+      t: "°C",
+      h: "%",
+      p: "hPa",
+      w: "m/s"
+    };
+
+    const preferredOrder = [
+      "pm25",
+      "pm10",
+      "no2",
+      "so2",
+      "o3",
+      "co",
+      "nh3",
+      "t",
+      "h",
+      "p",
+      "w"
+    ];
+
+    const entries = Object.entries(data.iaqi).sort(
+      ([firstKey], [secondKey]) => {
+        const firstIndex = preferredOrder.indexOf(firstKey);
+        const secondIndex = preferredOrder.indexOf(secondKey);
+
+        return (
+          (firstIndex === -1 ? 999 : firstIndex) -
+          (secondIndex === -1 ? 999 : secondIndex)
+        );
+      }
+    );
+
+    entries.forEach(([key, measurement]) => {
+      if (
+        measurement?.v === undefined ||
+        measurement?.v === null
+      ) {
+        return;
+      }
+
+      const card = document.createElement("div");
+      card.className = "chip";
+
+      const title = document.createElement("strong");
+      title.textContent = displayNames[key] || key.toUpperCase();
+
+      const lineBreak = document.createElement("br");
+
+      const value = document.createElement("span");
+      value.className = "muted";
+
+      const unit = units[key] || "";
+      value.textContent = `${measurement.v}${unit ? ` ${unit}` : ""}`;
+
+      card.appendChild(title);
+      card.appendChild(lineBreak);
+      card.appendChild(value);
+
+      pollutants.appendChild(card);
+    });
+
+    aqResult.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest"
+    });
+  }
+
+  async function handleCitySearch(city) {
+    try {
+      showStatus(`Searching for air-quality data near ${city}…`);
+
+      if (aqResult) {
+        aqResult.classList.add("hidden");
+      }
+
+      const data = await searchCity(city);
+
+      displayAQI(data);
+      showStatus("Live air-quality data loaded successfully.");
+    } catch (error) {
+      console.error("City search error:", error);
+
+      showStatus(
+        `Unable to load data: ${error.message}`,
+        true
+      );
+    }
+  }
+
+  async function handleGPS() {
+    if (!navigator.geolocation) {
+      showStatus(
+        "Your browser does not support location services.",
+        true
+      );
+      return;
+    }
+
+    showStatus("Requesting your current location…");
+    gpsButton.disabled = true;
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          showStatus(
+            "Searching for the nearest air-quality monitoring station…"
+          );
+
+          if (aqResult) {
+            aqResult.classList.add("hidden");
+          }
+
+          const data = await searchCoordinates(
+            position.coords.latitude,
+            position.coords.longitude
+          );
+
+          displayAQI(data);
+
+          showStatus(
+            "Nearest monitoring-station data loaded successfully."
+          );
+        } catch (error) {
+          console.error("GPS search error:", error);
+
+          showStatus(
+            `Unable to load data: ${error.message}`,
+            true
+          );
+        } finally {
+          gpsButton.disabled = false;
+        }
+      },
+      (error) => {
+        gpsButton.disabled = false;
+
+        let message =
+          "Your current location could not be accessed.";
+
+        if (error.code === error.PERMISSION_DENIED) {
+          message =
+            "Location permission was denied. Allow location access or search by city.";
+        } else if (
+          error.code === error.POSITION_UNAVAILABLE
+        ) {
+          message = "Your current location is unavailable.";
+        } else if (error.code === error.TIMEOUT) {
+          message = "The location request timed out.";
+        }
+
+        showStatus(message, true);
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 10000,
+        maximumAge: 300000
+      }
     );
   }
 
-  return token;
-}
-
-/**
- * Request AQI data from a WAQI API URL.
- */
-async function fetchWAQIData(url) {
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error(`Network error: ${response.status}`);
+  if (!searchForm || !cityInput) {
+    console.error(
+      "Search form or city input was not found in index.html."
+    );
+    return;
   }
 
-  const result = await response.json();
+  searchForm.addEventListener("submit", (event) => {
+    event.preventDefault();
 
-  if (result.status !== "ok") {
-    let errorMessage = "AQI data could not be found.";
+    const city = cityInput.value.trim();
 
-    if (typeof result.data === "string") {
-      errorMessage = result.data;
+    if (!city) {
+      showStatus(
+        "Please enter a city, state or country.",
+        true
+      );
+
+      cityInput.focus();
+      return;
     }
 
-    throw new Error(errorMessage);
-  }
-
-  return result.data;
-}
-
-/**
- * Search by city or location name.
- */
-async function getAQIByCity(city) {
-  const token = getToken();
-
-  const url =
-    `https://api.waqi.info/feed/${encodeURIComponent(city)}/` +
-    `?token=${encodeURIComponent(token)}`;
-
-  return fetchWAQIData(url);
-}
-
-/**
- * Search using latitude and longitude.
- */
-async function getAQIByCoordinates(latitude, longitude) {
-  const token = getToken();
-
-  const url =
-    `https://api.waqi.info/feed/geo:${latitude};${longitude}/` +
-    `?token=${encodeURIComponent(token)}`;
-
-  return fetchWAQIData(url);
-}
-
-/**
- * Display AQI and pollutant information.
- */
-function showAQI(data) {
-  aqResult.classList.remove("hidden");
-
-  $("#locationName").textContent =
-    data.city?.name || "Selected monitoring station";
-
-  $("#updatedAt").textContent = data.time?.s
-    ? `Updated: ${data.time.s}`
-    : "Update time unavailable";
-
-  const aqi = Number(data.aqi);
-  const aqiBadge = $("#aqiBadge");
-
-  aqiBadge.textContent = Number.isFinite(aqi)
-    ? `AQI ${aqi}`
-    : "AQI unavailable";
-
-  aqiBadge.style.backgroundColor = getAQIColour(aqi);
-  aqiBadge.style.color = getAQITextColour(aqi);
-
-  $("#domPol").textContent = data.dominentpol
-    ? `Dominant pollutant: ${data.dominentpol.toUpperCase()}`
-    : "Dominant pollutant unavailable";
-
-  const pollutantsContainer = $("#pollutants");
-  pollutantsContainer.innerHTML = "";
-
-  if (!data.iaqi || Object.keys(data.iaqi).length === 0) {
-    pollutantsContainer.innerHTML =
-      '<p class="muted">No individual pollutant measurements are available.</p>';
-
-    return;
-  }
-
-  const preferredOrder = [
-    "pm25",
-    "pm10",
-    "no2",
-    "so2",
-    "o3",
-    "co",
-    "nh3",
-    "t",
-    "h",
-    "p",
-    "w"
-  ];
-
-  const pollutantNames = {
-    pm25: "PM2.5",
-    pm10: "PM10",
-    no2: "NO₂",
-    so2: "SO₂",
-    o3: "O₃",
-    co: "CO",
-    nh3: "NH₃",
-    t: "Temperature",
-    h: "Humidity",
-    p: "Pressure",
-    w: "Wind"
-  };
-
-  const pollutantUnits = {
-    t: "°C",
-    h: "%",
-    p: "hPa",
-    w: "m/s"
-  };
-
-  const entries = Object.entries(data.iaqi).sort(([keyA], [keyB]) => {
-    const indexA = preferredOrder.indexOf(keyA);
-    const indexB = preferredOrder.indexOf(keyB);
-
-    const orderA = indexA === -1 ? 999 : indexA;
-    const orderB = indexB === -1 ? 999 : indexB;
-
-    return orderA - orderB;
+    handleCitySearch(city);
   });
 
-  entries.forEach(([key, measurement]) => {
-    if (measurement?.v === undefined || measurement?.v === null) return;
-
-    const card = document.createElement("div");
-    card.className = "chip";
-
-    const name = pollutantNames[key] || key.toUpperCase();
-    const unit = pollutantUnits[key] || "";
-
-    const nameElement = document.createElement("strong");
-    nameElement.textContent = name;
-
-    const valueElement = document.createElement("span");
-    valueElement.className = "muted";
-    valueElement.textContent = `${measurement.v}${unit ? ` ${unit}` : ""}`;
-
-    card.appendChild(nameElement);
-    card.appendChild(document.createElement("br"));
-    card.appendChild(valueElement);
-
-    pollutantsContainer.appendChild(card);
-  });
-}
-
-/**
- * Run a city search.
- */
-async function searchByCity(city) {
-  try {
-    setStatus(`Searching for air-quality data near ${city}…`);
-    aqResult.classList.add("hidden");
-
-    const data = await getAQIByCity(city);
-
-    showAQI(data);
-    setStatus("Live monitoring-station data loaded successfully.");
-  } catch (error) {
-    console.error("WAQI city search error:", error);
-    setStatus(`Unable to load data: ${error.message}`, true);
+  if (gpsButton) {
+    gpsButton.addEventListener("click", handleGPS);
   }
-}
-
-/**
- * Run a GPS search.
- */
-async function searchByGPS() {
-  if (!navigator.geolocation) {
-    setStatus("Your browser does not support location services.", true);
-    return;
-  }
-
-  setStatus("Requesting your location…");
-
-  gpsButton.disabled = true;
-
-  navigator.geolocation.getCurrentPosition(
-    async (position) => {
-      try {
-        setStatus("Searching for the nearest monitoring station…");
-        aqResult.classList.add("hidden");
-
-        const { latitude, longitude } = position.coords;
-
-        const data = await getAQIByCoordinates(latitude, longitude);
-
-        showAQI(data);
-        setStatus("Nearest available monitoring-station data loaded.");
-      } catch (error) {
-        console.error("WAQI GPS search error:", error);
-        setStatus(`Unable to load data: ${error.message}`, true);
-      } finally {
-        gpsButton.disabled = false;
-      }
-    },
-    (error) => {
-      gpsButton.disabled = false;
-
-      let message = "Your location could not be accessed.";
-
-      if (error.code === error.PERMISSION_DENIED) {
-        message =
-          "Location permission was denied. Allow location access or search by city.";
-      } else if (error.code === error.POSITION_UNAVAILABLE) {
-        message = "Your current location is unavailable.";
-      } else if (error.code === error.TIMEOUT) {
-        message = "The location request timed out.";
-      }
-
-      setStatus(message, true);
-    },
-    {
-      enableHighAccuracy: false,
-      timeout: 10000,
-      maximumAge: 300000
-    }
-  );
-}
-
-/**
- * City-search form event.
- */
-searchForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-
-  const city = cityInput.value.trim();
-
-  if (!city) {
-    setStatus("Please enter a city or location name.", true);
-    cityInput.focus();
-    return;
-  }
-
-  searchByCity(city);
 });
-
-/**
- * GPS button event.
- */
-gpsButton.addEventListener("click", searchByGPS);
-```

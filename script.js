@@ -1,156 +1,66 @@
-const $ = (sel)=>document.querySelector(sel);
+const $ = (sel) => document.querySelector(sel);
 
-const gradeColor = (aqi) => {
-  if (aqi == null || isNaN(aqi)) return "#6c757d";
-  if (aqi <= 50) return "#00e400";        // Good
-  if (aqi <= 100) return "#ffff00";       // Moderate
-  if (aqi <= 150) return "#ff7e00";       // Unhealthy for Sensitive Groups
-  if (aqi <= 200) return "#ff0000";       // Unhealthy
-  if (aqi <= 300) return "#8f3f97";       // Very Unhealthy
-  return "#7e0023";                        // Hazardous
-};
-
-async function fetchWAQIByKeyword(keyword){
+async function getAQI(city) {
   const token = window.WAQI_TOKEN;
 
-  const url = `https://api.waqi.info/search/?token=${token}&keyword=${encodeURIComponent(keyword)}`;
-  const r = await fetch(url);
-  const j = await r.json();
-
-  console.log("WAQI search result:", j);
-
-  if (j.status !== "ok" || !j.data || j.data.length === 0) {
-    throw new Error("No stations found. Try a nearby larger city.");
+  if (!token || token === "REPLACE_WITH_YOUR_WAQI_TOKEN") {
+    alert("WAQI token is missing. Add your token in index.html.");
+    return;
   }
 
-  j.data.sort((a, b) => (b.aqi || 0) - (a.aqi || 0));
+  const url = `https://api.waqi.info/feed/${encodeURIComponent(city)}/?token=${token}`;
 
-  const first = j.data[0];
+  console.log("Fetching:", url);
 
-  if (!first.uid) {
-    throw new Error("Station found but station ID is missing.");
+  const response = await fetch(url);
+  const result = await response.json();
+
+  console.log("WAQI response:", result);
+
+  if (result.status !== "ok") {
+    alert("Location not found or API error: " + (result.data || "Unknown error"));
+    return;
   }
 
-  return fetchWAQIByStation(first.uid);
+  showAQI(result.data);
 }
 
-async function fetchWAQIByCoords(lat, lon){
-  const token = window.WAQI_TOKEN;
-  const url = `https://api.waqi.info/feed/geo:${lat};${lon}/?token=${token}`;
-  const r = await fetch(url);
-  const j = await r.json();
-  if (j.status !== "ok") throw new Error("No data for this location");
-  return j.data;
-}
+function showAQI(data) {
+  document.getElementById("aqResult").classList.remove("hidden");
 
-async function fetchWAQIByStation(uid){
-  const token = window.WAQI_TOKEN;
+  document.getElementById("locationName").textContent =
+    data.city?.name || "Selected location";
 
-  const url = `https://api.waqi.info/feed/@${uid}/?token=${token}`;
-  const r = await fetch(url);
-  const j = await r.json();
+  document.getElementById("updatedAt").textContent =
+    data.time?.s ? `Updated: ${data.time.s}` : "";
 
-  console.log("WAQI station result:", j);
+  document.getElementById("aqiBadge").textContent = `AQI ${data.aqi}`;
+  document.getElementById("domPol").textContent =
+    data.dominentpol ? `Dominant: ${data.dominentpol.toUpperCase()}` : "";
 
-  if (j.status !== "ok") {
-    throw new Error("No AQI data available for this station.");
-  }
+  const pollutants = document.getElementById("pollutants");
+  pollutants.innerHTML = "";
 
-  return j.data;
-}
-
-// Optional: OpenAQ backup for pollutant list near coordinates
-async function fetchOpenAQ(lat, lon){
-  const url = `https://api.openaq.org/v3/measurements?coordinates=${lat},${lon}&radius=10000&limit=50&sort=desc&order_by=datetime`;
-  const r = await fetch(url);
-  if (!r.ok) throw new Error("OpenAQ fetch failed");
-  return (await r.json()).results;
-}
-
-function renderAQ(data, fallbackPollutants = []){
-  $("#aqResult").classList.remove("hidden");
-  $("#locationName").textContent = data.city?.name || data.city || "Selected location";
-  const ts = data.time?.s || data.time;
-  $("#updatedAt").textContent = ts ? `Updated: ${ts}` : "";
-
-  const aqi = Number(data.aqi);
-  const aqiBadge = $("#aqiBadge");
-  aqiBadge.textContent = `AQI ${isNaN(aqi) ? "—" : aqi}`;
-  aqiBadge.style.background = gradeColor(aqi);
-
-  const domPol = $("#domPol");
-  domPol.textContent = data.dominentpol ? `Dominant: ${data.dominentpol.toUpperCase()}` : "—";
-
-  const pollutants = [];
-  // WAQI "iaqi" object
-  if (data.iaqi){
-    for (const [key, obj] of Object.entries(data.iaqi)){
-      if (obj?.v != null) pollutants.push([key.toUpperCase(), obj.v]);
-    }
-  }
-  // Merge in OpenAQ recent readings if missing
-  for (const p of fallbackPollutants){
-    const k = p.parameter?.toUpperCase?.() || p.parameter;
-    const already = pollutants.find(([name])=>name===k);
-    if (!already) pollutants.push([k, p.value]);
-  }
-  const wrap = $("#pollutants");
-  wrap.innerHTML = "";
-  pollutants.sort((a,b)=>a[0].localeCompare(b[0]));
-  pollutants.forEach(([name,val])=>{
-    const div = document.createElement("div");
-    div.className = "chip";
-    div.innerHTML = `<strong>${name}</strong><br/><span class="muted">${val}</span>`;
-    wrap.appendChild(div);
-  });
-}
-
-async function handleSearch(keyword, coords){
-  try{
-    let waqi;
-    let openaq = [];
-    if (coords){
-      waqi = await fetchWAQIByCoords(coords.lat, coords.lon);
-      try { openaq = await fetchOpenAQ(coords.lat, coords.lon); } catch {}
-    } else {
-      waqi = await fetchWAQIByKeyword(keyword);
-    }
-    renderAQ(waqi, openaq);
-  } catch (e){
-    alert(e.message || "Something went wrong");
-  }
-}
-
-document.getElementById("searchForm").addEventListener("submit", (e)=>{
-  e.preventDefault();
-  const q = $("#cityInput").value.trim();
-  if (!q) return;
-  handleSearch(q, null);
-});
-
-document.getElementById("useGPS").addEventListener("click", ()=>{
-  if (!navigator.geolocation){ alert("Geolocation not supported"); return; }
-  navigator.geolocation.getCurrentPosition(
-    (pos)=> handleSearch(null, {lat: pos.coords.latitude, lon: pos.coords.longitude}),
-    (err)=> alert("Could not get your location")
-  );
-});
-
-// --- News (via serverless function /api/news) ---
-async function loadNews(){
-  try{
-    const r = await fetch("/api/news");
-    const items = await r.json();
-    const list = $("#newsList");
-    list.innerHTML = "";
-    items.slice(0,8).forEach(item=>{
-      const li = document.createElement("li");
-      li.innerHTML = `<a href="${item.link}" target="_blank" rel="noopener">${item.title}</a>
-        <div class="muted small">${item.source} — ${item.pubDate}</div>`;
-      list.appendChild(li);
+  if (data.iaqi) {
+    Object.entries(data.iaqi).forEach(([key, value]) => {
+      const div = document.createElement("div");
+      div.className = "chip";
+      div.innerHTML = `<strong>${key.toUpperCase()}</strong><br>${value.v}`;
+      pollutants.appendChild(div);
     });
-  }catch(e){
-    // Silent fail; leave empty
   }
 }
-loadNews();
+
+document.getElementById("searchForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+
+  const city = document.getElementById("cityInput").value.trim();
+
+  if (!city) {
+    alert("Please enter a city name.");
+    return;
+  }
+
+  getAQI(city);
+});
+

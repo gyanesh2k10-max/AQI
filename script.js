@@ -12,14 +12,26 @@ const gradeColor = (aqi) => {
 
 async function fetchWAQIByKeyword(keyword){
   const token = window.WAQI_TOKEN;
+
   const url = `https://api.waqi.info/search/?token=${token}&keyword=${encodeURIComponent(keyword)}`;
   const r = await fetch(url);
   const j = await r.json();
-  if (j.status !== "ok" || !j.data?.length) throw new Error("No stations found");
-  // Pick best match (highest scoring)
-  j.data.sort((a,b)=>(b.score??0)-(a.score??0));
+
+  console.log("WAQI search result:", j);
+
+  if (j.status !== "ok" || !j.data || j.data.length === 0) {
+    throw new Error("No stations found. Try a nearby larger city.");
+  }
+
+  j.data.sort((a, b) => (b.aqi || 0) - (a.aqi || 0));
+
   const first = j.data[0];
-  return fetchWAQIByStation(first.station?.uid);
+
+  if (!first.uid) {
+    throw new Error("Station found but station ID is missing.");
+  }
+
+  return fetchWAQIByStation(first.uid);
 }
 
 async function fetchWAQIByCoords(lat, lon){
@@ -33,10 +45,17 @@ async function fetchWAQIByCoords(lat, lon){
 
 async function fetchWAQIByStation(uid){
   const token = window.WAQI_TOKEN;
+
   const url = `https://api.waqi.info/feed/@${uid}/?token=${token}`;
   const r = await fetch(url);
   const j = await r.json();
-  if (j.status !== "ok") throw new Error("No data for this station");
+
+  console.log("WAQI station result:", j);
+
+  if (j.status !== "ok") {
+    throw new Error("No AQI data available for this station.");
+  }
+
   return j.data;
 }
 

@@ -255,7 +255,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const unit = units[key] || "";
 let displayValue = measurement.v;
 
-if (["h", "p", "w"].includes(key)) {
+if (["t", "h", "p", "w"].includes(key)) {
   const numericValue = Number(measurement.v);
 
   if (Number.isFinite(numericValue)) {
